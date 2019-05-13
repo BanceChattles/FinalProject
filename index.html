@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Movies</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+<body>
+    <!-- <style>body{background-color: powderblue;}</style> -->
+    <div id="app">
+        <div class="jumbotron" style="text-align: center;">
+            <h1>Chance's Cinema</h1>
+        </div>
+        <div class="d-flex p-2 bd-highlight" style="justify-content: center;">
+                <div v-for="i in numMovies" class="card" style="width: 18rem;">
+                    <img v-bind:src="getImage(i)" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">{{moviesObject.results[i-1].title}}</h5>
+                        <div class="btn-group">
+                            <a v-on:click="addChild(moviesObject.results[i-1].title)" href="#" class="btn btn-primary">Buy Child Ticket</a>
+                            <a v-on:click="addAdult(moviesObject.results[i-1].title)" href="#" class="btn btn-secondary">Buy Adult Ticket</a>
+                        </div>
+                        <p class="card-text">{{moviesObject.results[i-1].overview}}</p>
+                        
+                    </div>
+                </div>
+        </div>
+
+        <div v-if="seen" class="d-flex p-2 bd-highlight mx-auto" style="width: 80%;">
+            <table class="table" > 
+                <thead>
+                  <tr>
+                    <th scope="col">Movie</th>
+                    <th scope="col">Adult Tickets ${{adultPrice}}</th>
+                    <th scope="col">Child Tickets ${{childPrice}}</th>
+                    <th scope="col">Total</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="i in moviesCount">
+                    <th scope="row">{{moviesPurchase[i-1]}}</th>
+                    <td><p v-if="show1[i-1]">{{adultTickets[i - 1]}} <button v-on:click="minusAdult(i-1)" type="button" class="btn btn-primary btn-sm">-</button></p></td>
+                    <td><p v-if="show2[i-1]">{{childTickets[i - 1]}} <button v-on:click="minusChild(i-1)"type="button" class="btn btn-primary btn-sm">-</button></p></td>
+                    <td>{{ticketTotal[i - 1]}}</td>
+                    <td>
+                        <div class="btn-group">
+                        <a v-on:click="removeMovie(i-1)"href="#" class="btn btn-primary">Remove</a></div>
+                    </td>
+                  </tr>
+                  <tr>
+                      <td></td>
+                      <td></td>
+                      <td>Adult Subtotal: </td>
+                      <td>
+                        {{adultSubtotal}}
+                      </td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td></td>
+                    <td>Child Subtotal: </td>
+                    <td>
+                      {{childSubtotal}}
+                    </td>
+                </tr>
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>Subtotal: </td>
+                    <td>
+                      {{subtotal}}
+                    </td>
+                </tr>
+                </tbody>
+              </table>
+        </div>
+<!-- End HTML, Start JS -->
+
+    <script>
+        var app = new Vue({
+            el: "#app",
+            data: {
+                moviesObject: "",
+                numMovies: 5,
+                seen: false,
+                moviesCount: 0,
+                moviesPurchase: [],
+                adultTickets: [],
+                childTickets: [],
+                ticketTotal: [],
+                check: false,
+                count: 0,
+                adultPrice: 7.99,
+                childPrice: 4.99,
+                adultSubtotal: 0,
+                childSubtotal: 0,
+                subtotal: 0,
+                show1: [false, false, false],
+                show2: [false, false, false]
+            },
+            methods: {
+                request: function(){
+                    if (httpRequest.readyState == 4 && httpRequest.status == 200) {
+                    var jsObject = JSON.parse(httpRequest.responseText);
+                    this.moviesObject = jsObject
+                    }
+                },
+                getImage(i){
+                    return "https://image.tmdb.org/t/p/w500" + this.moviesObject.results[i-1].poster_path
+                },
+                addAdult(name){
+                    this.seen = true;
+                    if (this.moviesPurchase.length > 0) {
+                        for (let x = 0; x < this.moviesPurchase.length; x++) {
+                            if(name == this.moviesPurchase[x]) {
+                                if(this.adultTickets[x] === undefined) {
+                                    this.adultTickets[x] = 0;
+                                }
+                                this.adultTickets[x] += 1;                             
+                                let hold = this.moviesCount;
+                                this.moviesCount = 0;
+                                this.moviesCount = hold;
+                                this.check = true;
+                            }
+                        }
+                        if (this.check == false) {
+                            this.adultTickets[this.count] = 0;
+                            this.moviesCount++;
+                            this.show1[this.count] = false;
+                            this.moviesPurchase[this.count] = name;
+                            this.adultTickets[this.count] += 1;
+                            this.count++;
+                        }
+                    this.check = false;
+                    } else {
+                        this.adultTickets[0] = 0;
+                        this.moviesCount++;
+                        this.show1[0] = false;
+                        this.moviesPurchase[0] = name;
+                        this.adultTickets[0] += 1;
+                        this.count++;
+                    }
+                    this.findTotal();
+                    this.findTrue();
+                },
+                addChild(name){
+                    this.seen = true;
+                    if (this.moviesPurchase.length > 0) {
+                        for (let x = 0; x < this.moviesPurchase.length; x++) {
+                            if(name == this.moviesPurchase[x]) {
+                                if(this.childTickets[x] === undefined) {
+                                    this.childTickets[x] = 0;
+                                }
+                                this.childTickets[x] += 1;                              
+                                let hold = this.moviesCount;
+                                this.moviesCount = 0;
+                                this.moviesCount = hold;
+                                this.check = true;
+                            }
+                        }
+                        if (this.check == false) {
+                            this.childTickets[this.count] = 0;
+                            this.moviesCount++;
+                            this.show2[this.count] = false;
+                            this.moviesPurchase[this.count] = name;
+                            this.childTickets[this.count] += 1;
+                            this.count++;
+                        }
+                    this.check = false;
+                    } else {
+                        this.childTickets[0] = 0;
+                        this.moviesCount++;
+                        this.show2[0] = false;
+                        this.moviesPurchase[0] = name;
+                        this.childTickets[0] += 1;
+                        this.count++;
+                    }
+                    this.findTotal();
+                    this.findTrue();
+                },
+                findTotal() {
+                    let adultTotal = 0;
+                    let childTotal = 0;
+                    this.subtotal = 0;
+                    this.adultSubtotal = 0;
+                    this.childSubtotal = 0;
+                    for(let i = 0; i < this.moviesPurchase.length; i++) {
+                        if(this.ticketTotal[i] === undefined) {
+                            this.ticketTotal[i] = 0;
+                        }
+                        if (this.adultTickets[i] !== undefined) {
+                            adultTotal = (this.adultTickets[i] * this.adultPrice);
+                        }
+                        if (this.childTickets[i] !== undefined) {
+                            childTotal = (this.childTickets[i] * this.childPrice);
+                        }
+                        this.ticketTotal[i] = adultTotal + childTotal;
+                        this.adultSubtotal += adultTotal;
+                        this.childSubtotal += childTotal;
+                        adultTotal = 0;
+                        childTotal = 0;
+                        this.subtotal += this.ticketTotal[i];
+                        this.findTrue();
+                    }
+                },
+                removeMovie(i) {
+                    this.moviesPurchase.splice(i, 1);
+                    this.adultTickets.splice(i, 1);
+                    this.childTickets.splice(i, 1);
+                    this.ticketTotal.splice(i, 1);
+                    this.moviesCount--;
+                    this.count--;
+                    if (this.moviesCount == 0) {
+                        this.seen = false;
+                    }
+                    this.findTotal();
+                },
+                findTrue() {
+                    for (let i = 0; i < this.show1.length; i++) {
+                        if (this.adultTickets[i] > 0) {
+                            this.show1[i] = true;
+                        } else {
+                            this.show1[i] = false;
+                        }
+                    }
+                    for (let i = 0; i < this.show2.length; i++) {
+                        if (this.childTickets[i] > 0) {
+                            this.show2[i] = true;
+                        } else {
+                            this.show2[i] = false;
+                        }
+                    }
+                    
+                    for (let i = 0; i < this.moviesCount; i++) {
+                        if (!this.show1[i] && !this.show2[i]) {
+                            console.log("removed");
+                            this.removeMovie(i);
+                        }
+                    }
+                },
+                minusAdult(i) {
+                    this.adultTickets[i] -= 1;
+                    this.findTrue();
+                    this.findTotal();
+                },
+                minusChild(i) {
+                    this.childTickets[i] -= 1;
+                    this.findTotal();
+                    this.findTrue();
+                }
+            }
+        })
+        var httpRequest = new XMLHttpRequest();
+                httpRequest.open("get", "https://api.themoviedb.org/3/movie/now_playing?api_key=d35e6f1bf8c1c544c9a27fedf739fa6d&language=en-US&page=1");
+                httpRequest.send();
+                httpRequest.onreadystatechange  = app.request;
+                   
+    </script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+</html>
